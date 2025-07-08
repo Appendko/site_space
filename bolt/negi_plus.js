@@ -1,10 +1,10 @@
 // 本程式碼採用創用cc-姓名標示方式授權，請保留註解部分以標示原來源
 (function () {
-    // thanks for http://www.plurk.com/danny8376
+    // thanks for https://www.plurk.com/danny8376
     if (window.jQuery === undefined) {
       var script_tag = document.createElement('script');
       script_tag.setAttribute("type", "text/javascript");
-      script_tag.setAttribute("src", "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js");
+      script_tag.setAttribute("src", "https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js");
 
       if (script_tag.readyState) {
         script_tag.onreadystatechange = function () { // For old versions of IE
@@ -23,7 +23,7 @@
     }
 
     function main($) {
-    // The following code is from http://anohito.tw/sandbox/negi/negi_plus.js
+    // The following code is from https://anohito.tw/sandbox/negi/negi_plus.js
 
       var Negi, body, document_width, fibo, negi;
       fibo = [2, 3, 5, 8, 13, 21, 34, 55, 89];
