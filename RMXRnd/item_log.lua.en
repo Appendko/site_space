@@ -1,0 +1,196 @@
+item_log = {}
+
+local itemNameforLog = {
+[0x000] = "[1]Life Up",
+[0x010] = "[1]Energy Up",
+[0x024] = "[1]Sub Tank",
+[0x028] = "[1]Weapon : Launch Octopus",
+[0x029] = "[1]Weapon : Sting Chameleon",
+[0x02A] = "[1]Weapon : Armored Armadillo",
+[0x02B] = "[1]Weapon : Flame Mammoth",
+[0x02C] = "[1]Weapon : Storm Eagle",
+[0x02D] = "[1]Weapon : Spark Mandrill",
+[0x02E] = "[1]Weapon : Boomer Kuwanger",
+[0x02F] = "[1]Weapon : Chill Penguin",
+[0x030] = "[1]Key : Launch Octopus",
+[0x031] = "[1]Key : Sting Chameleon",
+[0x032] = "[1]Key : Armored Armadillo",
+[0x033] = "[1]Key : Flame Mammoth",
+[0x034] = "[1]Key : Storm Eagle",
+[0x035] = "[1]Key : Spark Mandrill",
+[0x036] = "[1]Key : Boomer Kuwanger",
+[0x037] = "[1]Key : Chill Penguin",
+[0x039] = "[1]!? : Sting Chameleon Stage Change",
+[0x03B] = "[1]!? : Flame Mammoth Stage Change",
+[0x03D] = "[1]!? : Spark Mandrill Stage Change",
+[0x040] = "[1]Key : Sigma",
+[0x050] = "[1]Hadouken",
+[0x058] = "[1]Head Parts",
+[0x05A] = "[1]Arm Parts",
+[0x05C] = "[1]Body Parts",
+[0x05E] = "[1]Foot Parts",
+[0x060] = "[1]Buster Ammo",
+[0x065] = "[1]Buster Power Up",
+[0x068] = "[1]Buster Fire Rate Up",
+[0x06E] = "[1]Dash Buster Ammo",
+[0x070] = "[1]High Speed Charge",
+
+[0x100] = "[2]Life Up",
+[0x110] = "[2]Energy Up",
+[0x124] = "[2]Sub Tank",
+[0x128] = "[2]Weapon : Morph Moth",
+[0x129] = "[2]Weapon : Wire Sponge",
+[0x12A] = "[2]Weapon : Bubble Crab",
+[0x12B] = "[2]Weapon : Flame Stag",
+[0x12C] = "[2]Weapon : Magna Centipede",
+[0x12D] = "[2]Weapon : Crystal Snail",
+[0x12E] = "[2]Weapon : Overdrive Ostrich",
+[0x12F] = "[2]Weapon : Wheel Gator",
+[0x130] = "[2]Key : Morph Moth",
+[0x131] = "[2]Key : Wire Sponge",
+[0x132] = "[2]Key : Bubble Crab",
+[0x133] = "[2]Key : Flame Stag",
+[0x134] = "[2]Key : Magna Centipede",
+[0x135] = "[2]Key : Crystal Snail",
+[0x136] = "[2]Key : Overdrive Ostrich",
+[0x137] = "[2]Key : Wheel Gator",
+[0x138] = "[2]Zero Parts : Foot",
+[0x139] = "[2]Zero Parts : Head",
+[0x13A] = "[2]Zero Parts : Body",
+[0x140] = "[2]Key : Sigma",
+[0x150] = "[2]Shoryuken",
+[0x158] = "[2]Head Parts",
+[0x15A] = "[2]Arm Parts",
+[0x15C] = "[2]Body Parts",
+[0x15E] = "[2]Foot Parts",
+[0x160] = "[2]Buster Ammo",
+[0x165] = "[2]Buster Power Up",
+[0x168] = "[2]Buster Fire Rate Up",
+[0x16E] = "[2]Dash Buster Ammo",
+[0x170] = "[2]High Speed Charge",
+
+[0x200] = "[3]Life Up",
+[0x210] = "[3]Energy Up",
+[0x224] = "[3]Sub Tank",
+[0x228] = "[3]Weapon : Blast Hornet",
+[0x229] = "[3]Weapon : Blizzard Buffalo",
+[0x22A] = "[3]Weapon : Gravity Beetle",
+[0x22B] = "[3]Weapon : Toxic Seahorse",
+[0x22C] = "[3]Weapon : Volt Catfish",
+[0x22D] = "[3]Weapon : Crush Crawfish",
+[0x22E] = "[3]Weapon : Tunnel Rhino",
+[0x22F] = "[3]Weapon : Neon Tiger",
+[0x230] = "[3]Key : Blast Hornet",
+[0x231] = "[3]Key : Blizzard Buffalo",
+[0x232] = "[3]Key : Gravity Beetle",
+[0x233] = "[3]Key : Toxic Seahorse",
+[0x234] = "[3]Key : Volt Catfish",
+[0x235] = "[3]Key : Crush Crawfish",
+[0x236] = "[3]Key : Tunnel Rhino",
+[0x237] = "[3]Key : Neon Tiger",
+[0x238] = "[3]!? : Blast Hornet Stage Change",
+[0x239] = "[3]!? : Blizzard Buffalo Stage Change",
+[0x23A] = "[3]!? : Gravity Beetle Stage Change",
+[0x23C] = "[3]Key : Vile",
+[0x23D] = "[3]!? : Victory over Bit",
+[0x23E] = "[3]!? : Victory over Byte",
+[0x23F] = "[3]!? : Victory over Vile",
+[0x240] = "[3]Key : Sigma",
+[0x250] = "[3]Z-Saber",
+[0x254] = "[3]Ride Armor -N- Chimera",
+[0x255] = "[3]Ride Armor -K- Kangaroo",
+[0x256] = "[3]Ride Armor -H- Hawk",
+[0x257] = "[3]Ride Armor -F- Frog",
+[0x258] = "[3]Head Parts",
+[0x25A] = "[3]Arm Parts",
+[0x25C] = "[3]Body Parts",
+[0x25E] = "[3]Foot Parts",
+[0x260] = "[3]Buster Ammo",
+[0x265] = "[3]Buster Power Up",
+[0x268] = "[3]Buster Fire Rate Up",
+[0x26E] = "[3]Dash Buster Ammo",
+[0x270] = "[3]High Speed Charge",
+
+[0x300] = "[*]Life Up",
+[0x310] = "[*]Energy Up",
+[0x324] = "[*]Sub Tank",
+[0x328] = "[*]Weapon : A",
+[0x329] = "[*]Weapon : B",
+[0x32A] = "[*]Weapon : C",
+[0x32B] = "[*]Weapon : D",
+[0x32C] = "[*]Weapon : E",
+[0x32D] = "[*]Weapon : F",
+[0x32E] = "[*]Weapon : G",
+[0x32F] = "[*]Weapon : H",
+[0x330] = "[*]Key : A",
+[0x331] = "[*]Key : B",
+[0x332] = "[*]Key : C",
+[0x333] = "[*]Key : D",
+[0x334] = "[*]Key : E",
+[0x335] = "[*]Key : F",
+[0x336] = "[*]Key : G",
+[0x337] = "[*]Key : H",
+[0x340] = "[*]Key : Sigma",
+[0x350] = "[*]???",
+[0x358] = "[*]Head Parts",
+[0x35A] = "[*]Arm Parts",
+[0x35C] = "[*]Body Parts",
+[0x35E] = "[*]Foot Parts",
+[0x360] = "[*]Buster Ammo",
+[0x365] = "[*]Buster Power Up",
+[0x368] = "[*]Buster Fire Rate Up",
+[0x36E] = "[*]Dash Buster Ammo",
+[0x370] = "[*]High Speed Charge",
+
+}
+
+for t=0,3,1 do
+	local src = t * 0x100
+	for i=1,0xD,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x00 ] = itemNameforLog[ src + 0x00 ]
+		itemNameforLog[ dest + 0x10 ] = itemNameforLog[ src + 0x10 ]
+	end
+	for i=1,0xC,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x40 ] = itemNameforLog[ src + 0x40 ]
+	end
+	for i=1,0x3,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x24 ] = itemNameforLog[ src + 0x24 ]
+	end
+	itemNameforLog[ src + 0x59 ] = itemNameforLog[ src + 0x58 ]
+	itemNameforLog[ src + 0x5B ] = itemNameforLog[ src + 0x5A ]
+	itemNameforLog[ src + 0x5D ] = itemNameforLog[ src + 0x5C ]
+	itemNameforLog[ src + 0x5F ] = itemNameforLog[ src + 0x5E ]
+	for i=1,0x4,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x60 ] = itemNameforLog[ src + 0x60 ]
+	end
+	itemNameforLog[ src + 0x66 ] = itemNameforLog[ src + 0x65 ]
+	for i=1,0x5,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x68 ] = itemNameforLog[ src + 0x68 ]
+	end
+	itemNameforLog[ src + 0x6F ] = itemNameforLog[ src + 0x6E ]
+	for i=1,0x3,1 do
+		local dest = t * 0x100 + i
+		itemNameforLog[ dest + 0x70 ] = itemNameforLog[ src + 0x70 ]
+	end
+end
+
+local item_log_file = "item_log.txt"
+
+function item_log.initialize_textlog()
+  console.clear()
+  local file = io.open(item_log_file,"w")
+  file:close()
+end
+
+function item_log.get_item_textlog(item_num)
+  local str = itemNameforLog[item_num]
+  console.log(str)
+  local file = io.open(item_log_file,"a")
+  file:write(string.format("%s\n",str))
+  file:close()
+end
