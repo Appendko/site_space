@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+    <head>
+        <title>Chat List | Streamer Widget</title>
+        <meta name="robots" content="noindex" />
+
+        <meta charset="utf-8" />
+        <meta name="theme-color" content="#91beff" />
+        <meta name="auhtor" content="猫又おにぎり (https://haer0248.me/)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+
+        <link rel="shortcut icon" href="https://nekolive.net/assets/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="https://nekolive.net/assets/favicon.ico" />
+
+        <style>
+            .card-rank-default {
+                --color-body: linear-gradient(65deg, rgba(156, 225, 236, 1) 0%, rgba(0, 184, 212, 1) 100%);
+                --color-head: linear-gradient(65deg, rgba(156, 225, 236, 1) 0%, rgba(0, 184, 212, 1) 100%);
+                --color-body-text: #000000;
+                --color-head-text: #000000;
+            }
+        </style>
+
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap');
+
+            body {
+                font-family: "Noto Sans TC", serif;
+                padding: 0;
+                margin: 0;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+
+            ::-webkit-scrollbar {
+                display: none;
+            }
+
+            .list {
+                display: flex;
+                width: max-content;
+                animation: marquee-scroll linear infinite; /* Time Duration, smaller number -> faster */
+            }
+
+            .contents {
+                display: flex;
+                flex-direction: row;
+                height: 35px;
+                position: relative;
+            }
+
+            .box {
+                padding-left: 10px;
+                padding-right: 10px;
+                border-radius: 999px;
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                color: var(--color-body-text) !important;
+                background: var(--color-body) !important;
+                justify-content: center;
+                margin-right: 10px;
+                font-size: 14px;
+                animation: faceIn 0.8s ease-out forwards;
+                text-wrap-mode: nowrap;
+                box-shadow: 0px 0px 10px black;
+                cursor: pointer;
+            }
+
+            .box img {
+                height: 24px;
+                width: 24px;
+                margin-right: 5px;
+                border-radius: 1em;
+            }
+
+            .box p {
+                font-weight: bold;
+            }
+
+            @keyframes faceIn {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            
+            @keyframes marquee-scroll {
+                from {
+                    transform: translateX(0);
+                }
+                to {
+                    transform: translateX(-50%);
+                }
+            }            
+        </style>
+
+        <script>
+            function extractUUID() {
+                const currentURL = window.location.href;
+                const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+                const match = currentURL.match(uuidPattern);
+
+                if (match) {
+                    const uuid = match[0];
+                    return uuid;
+                }
+
+                const pathSegments = window.location.pathname.split('/');
+                const lastSegment = pathSegments[pathSegments.length - 1];
+
+                if (lastSegment && lastSegment.length === 36 && lastSegment.includes('-')) {
+                    return lastSegment;
+                }
+
+                return null;
+            }
+
+            const USERINFO = {
+                uuid: extractUUID(),
+                username: ''
+            }
+
+            const ajaxHeader = {
+                'X-Nekolive-User-Uuid': USERINFO.uuid
+            }
+
+            const settings = {
+                isNewVersion: false,
+                cardAmount: {},
+                defaultAvatar: ''
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            async function loadAndApplyStyles() {
+                function convertChatlistStyle(style, prefix = '') {
+                    const rkimg = {};
+                    let cssOutput = '';
+
+                    for (const [key, value] of Object.entries(style)) {
+                        rkimg[key] = false;
+
+                        if (key) {
+                            cssOutput += `.${prefix}${key} {\n`;
+
+                            for (const [keys, values] of Object.entries(value)) {
+                                if (keys === '--rank-image') {
+                                    if (values) {
+                                        rkimg[key] = true;
+                                    }
+                                    cssOutput += `${keys}: url('${values}');\n`;
+                                } else {
+                                    cssOutput += `${keys}: ${values};\n`;
+                                }
+                            }
+
+                            cssOutput += `}\n`;
+
+                            if (rkimg[key] === true) {
+                                cssOutput += `
+                                .${prefix}${key} #message{ width: calc( 100% - 120px); }
+                                `;
+                            }
+                        }
+                    }
+                    const hideAvatar = (urlParams.get('hide-avatar') === 'true') ? true : false;
+                    if (hideAvatar) {
+                        cssOutput += `
+                        .box img {
+                            display: none !important;
+                        }`;
+                    }
+
+
+                    const styleElement = document.createElement('style');
+                    styleElement.type = 'text/css';
+                    styleElement.textContent = cssOutput;
+                    document.head.appendChild(styleElement);
+
+                    return true;
+                }
+
+                try {
+                    const response = await fetch(`https://${location.hostname}/loadUserSettings.php?query=chatlist,profile,company`, {
+                        headers: ajaxHeader
+                    });
+                    const result = await response.json();
+
+                    const profile = result.settings.profile;
+                    const company = result.settings.company;
+                    const chatlist = result.settings.chatlist;
+
+                    settings.defaultAvatar = profile?.favicon ?? company?.favicon ?? 'https://nekolive.net/favicon.png';
+
+                    if (chatlist?.style) {
+                        convertChatlistStyle(chatlist.style);
+                    }
+                    if (chatlist?.style_new) {
+                        settings.cardAmount = chatlist.style_new;
+                        if (Object.keys(settings.cardAmount).length > 0) {
+                            convertChatlistStyle(chatlist.style_new, 'card-rank-');
+                            settings.isNewVersion = true;
+                        }
+                    }
+                    installCustomCss();
+                } catch (error) {
+                    throw new Error(error.message);
+                } finally {
+                    if (isPreview) {
+                        loadPreview()
+                    } else {
+                        getDonate()
+                        setInterval(getDonate, 5000);
+                    }
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', async function () {
+                try {
+                    await loadAndApplyStyles();
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+
+            function installCustomCss() {
+                let cssOutput = '';
+
+                const styleElement = document.createElement('style');
+                styleElement.type = 'text/css';
+                styleElement.textContent = cssOutput;
+                document.head.appendChild(styleElement);
+            }
+        </script>
+
+        <style>
+            /* rank0: blue */
+            .scrank0 {
+                --color-head: #1565c0;
+                --color-head-text: #ffffff;
+                --color-body: #1e88e5;
+                --color-body-text: #ffffff;
+            }
+
+            /* rank1: light blue */
+            .scrank1 {
+                --color-head: #00b8d4;
+                --color-head-text: #000000;
+                --color-body: #00e5ff;
+                --color-body-text: #000000;
+            }
+
+            /* rank2: green */
+            .scrank2 {
+                --color-head: #00bfa5;
+                --color-head-text: #000000;
+                --color-body: #1de9b6;
+                --color-body-text: #000000;
+            }
+
+            /* rank3: yellow */
+            .scrank3 {
+                --color-head: #ffb300;
+                --color-head-text: #000000;
+                --color-body: #ffca28;
+                --color-body-text: #000000;
+            }
+
+            /* rank4: orange */
+            .scrank4 {
+                --color-head: #e65100;
+                --color-head-text: #ffffff;
+                --color-body: #f57c00;
+                --color-body-text: #ffffff;
+            }
+
+            /* rank5: purple */
+            .scrank5 {
+                --color-head: #c2185b;
+                --color-head-text: #ffffff;
+                --color-body: #e91e63;
+                --color-body-text: #ffffff;
+            }
+
+            /* rank6: red */
+            .scrank6 {
+                --color-head: #d00000;
+                --color-head-text: #ffffff;
+                --color-body: #e62117;
+                --color-body-text: #ffffff;
+            }
+
+            /* rank5000: rainbow */
+            .scrank5k {
+                --color-head: linear-gradient(90deg, rgba(255, 74, 74, 1) 0%, rgba(251, 143, 89, 1) 16%, rgba(228, 228, 82, 1) 34%, rgba(61, 255, 61, 1) 51%, rgba(74, 199, 255, 1) 69%, rgba(76, 130, 255, 1) 84%, rgba(255, 76, 255, 1) 100%);
+                --color-head-text: #000000;
+                --color-body: linear-gradient(90deg, rgba(255, 74, 74, 1) 0%, rgba(251, 143, 89, 1) 16%, rgba(228, 228, 82, 1) 34%, rgba(61, 255, 61, 1) 51%, rgba(74, 199, 255, 1) 69%, rgba(76, 130, 255, 1) 84%, rgba(255, 76, 255, 1) 100%);
+                --color-body-text: #000000;
+            }
+
+            /* rank10000: golden */
+            .scrank1w,
+            .scrank2w,
+            .scrank3w,
+            .scrank4w,
+            .scrank5w {
+                --color-head: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+                --color-head-text: #000000;
+                --color-body: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+                --color-body-text: #000000;
+            }
+
+            @-webkit-keyframes insert {
+                from {
+                    left: 100%;
+                }
+
+                to {
+                    left: 0px;
+                }
+            }
+
+            @keyframes insert {
+                from {
+                    left: 100%;
+                }
+
+                to {
+                    left: 0px;
+                }
+            }
+
+            @keyframes MoveBackgroundPosition {
+                0% {
+                    background-position: 0% 50%
+                }
+
+                50% {
+                    background-position: 100% 50%
+                }
+
+                100% {
+                    background-position: 0% 50%
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="list" style="animation-duration: 30s">
+            <div class="contents" id="contents0" data-list></div>
+            <div class="contents" id="contents1" data-list></div>            
+        </div>
+
+        <script>
+            const limit = Math.min(99, Math.max(1, Number(urlParams.get('limit')) || 99));
+            const displayName = (urlParams.get('show-name') === 'true') ? true : false;
+            const isNoComma = (urlParams.get('no-comma') === 'true') ? true : false;
+            const isPreview = (urlParams.get('preview') === 'true') ? true : false;
+            const marqueeSpeed = Math.min(200, Math.max(1, Number(urlParams.get('marquee')) || 100));
+
+            if (isPreview) {
+                const root = document.documentElement;
+                root.style.setProperty('background-color', '#2b3035');
+            }
+
+            const currency = urlParams.get('currency') ?? 'NT$';
+
+            let tmp = new Array();
+            let now = 0;
+
+            function getDonate() {
+                fetch(`https://${window.location.host}/getDonate.php?_=Simplelist`, {
+                    method: "POST",
+                    headers: ajaxHeader,
+                    body: new URLSearchParams({
+                        action: "new_list"
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                }).then(data => {
+                    if (data) {
+                        for (var i in data) {
+                            if (!tmp.includes(data[i].id)) {
+                                if (data[i].id) {
+                                    tmp.push(data[i].id);
+                                    pushChat(data[i]);
+                                }
+                            }
+                        }
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+            function pushChat(data) {
+                const {
+                    amount,
+                    name = '匿名',
+                    avatar = 'https://nekolive.net/favicon.png',
+                    comment
+                } = data;
+
+                if (now >= limit) {
+                    document.querySelectorAll('.box').forEach((el, i, arr) => {
+                        if (i === arr.length - 1) el.remove();
+                    });
+                }
+
+                let cardClass;
+                cardClass = chatBackgroundColor(amount, 'card-rank-');
+
+                let showComment = '', showAmount = 0, showAvatar = avatar, showName = '';
+
+                if (showAvatar === "" || showAvatar === null || showAvatar === undefined) {
+                    showAvatar = settings.defaultAvatar;
+                }
+
+                showName = name;
+                if (name === "匿名") {
+                    showAvatar = settings.defaultAvatar;
+                }
+
+                if (amount) {
+                    showAmount = (amount).toLocaleString('en-US')
+                    if (isNoComma) {
+                        showAmount = amount;
+                    }
+                }
+
+                const list0 = document.getElementById("contents0");
+                const tempDiv = document.createElement("div");
+                tempDiv.className = `box ${cardClass}`;
+                if (displayName) {
+                    tempDiv.innerHTML = `<img src="${showAvatar}"><p>${showName} ${currency}${showAmount}</p>`;
+                } else {
+                    tempDiv.innerHTML = `<img src="${showAvatar}"><p>${currency}${showAmount}</p>`;
+                }
+                list0.prepend(tempDiv);
+                
+                const list1 = document.getElementById("contents1");
+                list1.prepend(tempDiv.cloneNode(true));
+                
+                curwidth = list0.getBoundingClientRect().width
+                newspeed = curwidth/marqueeSpeed   /* marqueeSpeed should be modified by url params */
+                document.getElementsByClassName("list")[0].style.animationDuration = newspeed+'s'
+                now++
+            }
+
+            function chatBackgroundColor(amount, prefix = '') {
+                if (settings.isNewVersion) {
+                    const numAmount = parseInt(amount) ?? 0;
+
+                    if (!settings.cardAmount) {
+                        return `${prefix}default`;
+                    }
+
+                    const thresholds = Object.keys(settings.cardAmount).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+                    const selectedThreshold = thresholds.filter(threshold => threshold <= numAmount).pop() || thresholds[0];
+
+                    const config = settings.cardAmount[selectedThreshold];
+
+                    if (!config) {
+                        return `${prefix}default`;
+                    }
+
+                    return `${prefix}${selectedThreshold}`;
+                }
+
+                let data = [{ amount: 30, css: 'scrank1' }, { amount: 75, css: 'scrank2' }, { amount: 150, css: 'scrank3' }, { amount: 300, css: 'scrank4' }, { amount: 750, css: 'scrank5' }, { amount: 1500, css: 'scrank6' }, { amount: 5000, css: 'scrank5k' }, { amount: 10000, css: 'scrank1w' }, { amount: 20000, css: 'scrank2w' }, { amount: 30000, css: 'scrank3w' }, { amount: 40000, css: 'scrank4w' }, { amount: 50000, css: 'scrank5w' }], color_css = 'scrank0';
+
+                for (let i = data.length - 1; i >= 0; i--) {
+                    if (amount >= data[i].amount) {
+                        color_css = data[i].css;
+                        break;
+                    }
+                }
+
+                return color_css;
+            }
+
+            function loadPreview() {
+                pushChat({
+                    amount: 50000,
+                    name: '路過的一位觀眾'
+                });
+                pushChat({
+                    amount: 40000,
+                    name: '路過的一位觀眾'
+                });
+                pushChat({
+                    amount: 30000,
+                    name: '路過的一位觀眾'
+                });
+                pushChat({
+                    amount: 20000,
+                    name: '路過的一位觀眾',
+                    comment: '主播我發票中頭獎！'
+                });
+                pushChat({
+                    amount: 10000,
+                    name: '路過的一位觀眾',
+                    comment: '主播我樂透中頭獎！'
+                });
+                pushChat({
+                    amount: 5000,
+                    name: '路過的一位觀眾',
+                    comment: '妳好可愛，給妳錢'
+                });
+                pushChat({
+                    amount: 1500,
+                    name: '路過的一位觀眾',
+                    comment: ''
+                });
+                pushChat({
+                    amount: 750,
+                    name: '路過的一位觀眾',
+                    comment: '紅包分紅'
+                });
+                pushChat({
+                    amount: 300,
+                    name: '路過的一位觀眾',
+                    comment: '大吉大利！今晚加菜！'
+                });
+                pushChat({
+                    amount: 150,
+                    name: '路過的一位觀眾',
+                    comment: '這是一筆贊助測試。'
+                });
+                pushChat({
+                    amount: 75,
+                    name: '路過的一位觀眾',
+                    comment: 'お疲れ様でした！'
+                });
+                pushChat({
+                    amount: 30,
+                    name: '路過的一位觀眾',
+                    comment: '我是不是參加到什麼祭典了！好耶。'
+                });
+                pushChat({
+                    amount: 20,
+                    name: '路過的一位觀眾',
+                    comment: '初見安安！'
+                });
+            }
+        </script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"8c89f53d49d744888dc062db410de7a8","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+
+</html>
